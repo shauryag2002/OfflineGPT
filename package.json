@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.16",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "eslint": "^9.39.4",
+    "eslint-config-expo": "~56.0.4",
     "expo": "~56.0.9",
     "expo-constants": "~56.0.17",
     "expo-device": "~56.0.4",
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint-plugin-import": "^2.32.0",
     "typescript": "~6.0.3"
   },
   "scripts": {

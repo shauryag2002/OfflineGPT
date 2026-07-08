@@ -1,5 +1,6 @@
+import GPTService from "@/services/GPTService";
 import { Host, ModalBottomSheetRef, Text } from "@expo/ui/jetpack-compose";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
@@ -13,6 +14,23 @@ export default function HomeScreen() {
     }
     setBottomSheetVisible(!isBottomSheetVisible);
   };
+  useEffect(() => {
+    const letsTry = async () => {
+      const gptServiceInstance = GPTService.getInstance();
+      try {
+        await gptServiceInstance.downloadModelToMobile(
+          process.env.EXPO_PUBLIC_MODEL_URL || "",
+        );
+        const modelInfo = await gptServiceInstance.loadModelInfo();
+        console.log("Model Info:", modelInfo);
+      } catch (error) {
+        console.error("Error loading model info:", error);
+      }
+    };
+
+    letsTry();
+  }, []);
+
   return (
     <SafeAreaView>
       <Host matchContents>
