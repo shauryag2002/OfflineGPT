@@ -1,5 +1,6 @@
 import { downloadFile } from "@/helpers/downloadFile";
 import LlamaRuntimeService from "@/services/LlamaRuntimeService";
+import { DownloadProgress } from "expo-file-system";
 import StoreModelURI from "./StoreModelURI";
 
 // This is a singleton class which will handle all the offline gpt logic like downloading the model, loading the model to memory, unloading etc. This singleton class contains all app related gpt logic functions.
@@ -21,9 +22,10 @@ class GPTService {
   public async downloadModelToMobile(
     modelUrl: string,
     isActive: boolean = true,
+    onProgress?: (progress: DownloadProgress) => void,
   ): Promise<void> {
     // Logic to download the model from the specified URL to the mobile device
-    const localFileURI = await downloadFile(modelUrl);
+    const localFileURI = await downloadFile(modelUrl, onProgress);
     console.log(`Model downloaded to: ${localFileURI}`);
     await StoreModelURI.addModelURI({
       modelURI: localFileURI,

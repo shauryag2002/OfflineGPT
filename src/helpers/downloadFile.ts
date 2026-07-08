@@ -1,6 +1,9 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, DownloadProgress, File, Paths } from "expo-file-system";
 
-export const downloadFile = async (fileUrl: string) => {
+export const downloadFile = async (
+  fileUrl: string,
+  onProgress?: (progress: DownloadProgress) => void,
+) => {
   const modelsDir = new Directory(Paths.document, "models");
 
   if (!modelsDir.exists) {
@@ -13,7 +16,7 @@ export const downloadFile = async (fileUrl: string) => {
     return file.uri;
   }
 
-  await File.downloadFileAsync(fileUrl, file);
+  await File.downloadFileAsync(fileUrl, file, { onProgress });
 
   return file.uri;
 };
