@@ -1,0 +1,63 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B7BFF"/>
+      <stop offset="100%" stop-color="#38E6D8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8B7BFF" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#8B7BFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background, full bleed -->
+  <rect width="512" height="512" fill="#18191c"/>
+
+  <!-- soft glow behind chip -->
+  <circle cx="256" cy="256" r="190" fill="url(#glow)"/>
+
+  <!-- chip pins: top -->
+  <rect x="206" y="118" width="14" height="34" rx="5" fill="url(#accent)"/>
+  <rect x="249" y="110" width="14" height="42" rx="5" fill="url(#accent)"/>
+  <rect x="292" y="118" width="14" height="34" rx="5" fill="url(#accent)"/>
+  <!-- chip pins: bottom -->
+  <rect x="206" y="360" width="14" height="34" rx="5" fill="url(#accent)"/>
+  <rect x="249" y="360" width="14" height="42" rx="5" fill="url(#accent)"/>
+  <rect x="292" y="360" width="14" height="34" rx="5" fill="url(#accent)"/>
+  <!-- chip pins: left -->
+  <rect x="118" y="206" width="34" height="14" rx="5" fill="url(#accent)"/>
+  <rect x="110" y="249" width="42" height="14" rx="5" fill="url(#accent)"/>
+  <rect x="118" y="292" width="34" height="14" rx="5" fill="url(#accent)"/>
+  <!-- chip pins: right -->
+  <rect x="360" y="206" width="34" height="14" rx="5" fill="url(#accent)"/>
+  <rect x="360" y="249" width="42" height="14" rx="5" fill="url(#accent)"/>
+  <rect x="360" y="292" width="34" height="14" rx="5" fill="url(#accent)"/>
+
+  <!-- chip body -->
+  <rect x="152" y="152" width="208" height="208" rx="34" fill="#18191c" stroke="url(#accent)" stroke-width="10"/>
+
+  <!-- neural network mark inside chip -->
+  <g stroke="#d0d1d4" stroke-width="3" stroke-linecap="round" opacity="0.9">
+    <line x1="207" y1="222" x2="256" y2="197"/>
+    <line x1="207" y1="222" x2="207" y2="290"/>
+    <line x1="256" y1="197" x2="305" y2="222"/>
+    <line x1="207" y1="290" x2="256" y2="315"/>
+    <line x1="256" y1="315" x2="305" y2="290"/>
+    <line x1="305" y1="222" x2="305" y2="290"/>
+    <line x1="207" y1="222" x2="256" y2="256"/>
+    <line x1="256" y1="197" x2="256" y2="256"/>
+    <line x1="305" y1="222" x2="256" y2="256"/>
+    <line x1="207" y1="290" x2="256" y2="256"/>
+    <line x1="256" y1="315" x2="256" y2="256"/>
+    <line x1="305" y1="290" x2="256" y2="256"/>
+  </g>
+  <g fill="url(#accent)">
+    <circle cx="207" cy="222" r="10"/>
+    <circle cx="256" cy="197" r="10"/>
+    <circle cx="305" cy="222" r="10"/>
+    <circle cx="207" cy="290" r="10"/>
+    <circle cx="305" cy="290" r="10"/>
+    <circle cx="256" cy="315" r="10"/>
+    <circle cx="256" cy="256" r="14" fill="#ffffff"/>
+  </g>
+</svg>
