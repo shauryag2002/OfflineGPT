@@ -8,6 +8,7 @@
     "eslint": "^9.39.4",
     "eslint-config-expo": "~56.0.4",
     "expo": "~56.0.9",
+    "expo-build-properties": "~56.0.24",
     "expo-constants": "~56.0.17",
     "expo-device": "~56.0.4",
     "expo-font": "~56.0.5",
