@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.shauryag2002.OfflineGPT"
+      "package": "com.shauryag2002.offlinegpt"
     },
     "web": {
       "output": "static",
