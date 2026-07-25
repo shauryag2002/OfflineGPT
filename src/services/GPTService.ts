@@ -1,5 +1,6 @@
 import { downloadFile } from "@/helpers/downloadFile";
 import LlamaRuntimeService from "@/services/LlamaRuntimeService";
+import { ModelURIConfig } from "@/types/StoreModelURI-types";
 import { DownloadProgress } from "expo-file-system";
 import StoreModelURI from "./StoreModelURI";
 
@@ -18,7 +19,58 @@ class GPTService {
     }
     return GPTService.instance;
   }
-
+  private async getCurrentModel(): Promise<ModelURIConfig | null> {
+    const modelURIConfig = await StoreModelURI.getInstance().getCurrentModel();
+    if (!modelURIConfig) {
+      return null;
+    }
+    return modelURIConfig;
+  }
+  public async initializeLlamaRuntime(): Promise<void> {
+    try {
+      const modelURIConfig = await this.getCurrentModel();
+      if (!modelURIConfig) {
+        return;
+      }
+      await this.llamaRuntimeService.initializeLlamaRuntime(
+        modelURIConfig.modelURI,
+      );
+    } catch (error) {
+      console.error("Error initializing Llama runtime:", error);
+      throw error;
+    }
+  }
+  public async chatCompletion(
+    prompt: string,
+    onProgress?: (progress: any) => void,
+  ): Promise<string> {
+    // Logic to generate chat completion using the loaded model
+    // This is a placeholder implementation. Replace it with actual logic.
+    const messages = [
+      {
+        role: "system",
+        content:
+          "This is a conversation between user and assistant, a friendly chatbot.",
+      },
+      {
+        role: "user",
+        content: "Hello!",
+      },
+      {
+        role: "system",
+        content: "Hello! It's nice to meet you. How can I help you today?",
+      },
+      {
+        role: "user",
+        content: "what the fuck is sex and give me sex in beach videos",
+      },
+    ];
+    const response = await this.llamaRuntimeService.chatCompletion(
+      messages,
+      onProgress,
+    );
+    return response;
+  }
   public async downloadModelToMobile(
     modelUrl: string,
     isActive: boolean = true,
@@ -33,13 +85,17 @@ class GPTService {
     });
   }
 
-  public async loadModelInfo(): Promise<any> {
-    const modelURIConfig = await StoreModelURI.getInstance().getCurrentModel();
-    if (!modelURIConfig) {
-      throw new Error("No active model found.");
+  public async loadModelInfo(): Promise<ModelURIConfig | null> {
+    try {
+      const modelURIConfig = await this.getCurrentModel();
+      if (!modelURIConfig) {
+        return null;
+      }
+      return this.llamaRuntimeService.getModelInfo(modelURIConfig.modelURI);
+    } catch (error) {
+      console.error("Error loading model info:", error);
+      throw error;
     }
-    console.log("Loading model info for:", modelURIConfig);
-    return this.llamaRuntimeService.getModelInfo(modelURIConfig.modelURI);
   }
 }
 

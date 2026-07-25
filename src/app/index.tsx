@@ -20,11 +20,14 @@ export default function HomeScreen() {
     setBottomSheetVisible(!isBottomSheetVisible);
   };
 
-  const loadModelInfo = async () => {
+  const initModel = async () => {
     const gptServiceInstance = GPTService.getInstance();
     try {
-      const modelInfo = await gptServiceInstance.loadModelInfo();
-      console.log("Model Info:", modelInfo);
+      await gptServiceInstance.initializeLlamaRuntime();
+      const response = await gptServiceInstance.chatCompletion(
+        "What is the capital of France?",
+      );
+      console.log("Chat completion response:", response);
     } catch (error) {
       console.error("Error loading model info:", error);
       setDownloadPopupVisible(true);
@@ -35,7 +38,7 @@ export default function HomeScreen() {
     // Checking for a model already downloaded to device storage is reading
     // from an external system, not deriving state from props/state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadModelInfo();
+    initModel();
   }, []);
 
   return (
@@ -49,7 +52,7 @@ export default function HomeScreen() {
           modelUrl={MODEL_URL}
           onDownloaded={() => {
             setDownloadPopupVisible(false);
-            loadModelInfo();
+            initModel();
           }}
           onDismiss={() => setDownloadPopupVisible(false)}
         />
