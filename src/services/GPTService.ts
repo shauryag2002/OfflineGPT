@@ -4,7 +4,12 @@ import { ModelURIConfig } from "@/types/StoreModelURI-types";
 import { DownloadProgress } from "expo-file-system";
 import StoreModelURI from "./StoreModelURI";
 
-// This is a singleton class which will handle all the offline gpt logic like downloading the model, loading the model to memory, unloading etc. This singleton class contains all app related gpt logic functions.
+export interface ChatMessagePayload {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+// This is a singleton class which handles all offline GPT logic like model management, initialization, and chat completions.
 class GPTService {
   private static instance: GPTService;
   private llamaRuntimeService: LlamaRuntimeService;
@@ -19,6 +24,7 @@ class GPTService {
     }
     return GPTService.instance;
   }
+
   private async getCurrentModel(): Promise<ModelURIConfig | null> {
     const modelURIConfig = await StoreModelURI.getInstance().getCurrentModel();
     if (!modelURIConfig) {
@@ -26,11 +32,12 @@ class GPTService {
     }
     return modelURIConfig;
   }
+
   public async initializeLlamaRuntime(): Promise<void> {
     try {
       const modelURIConfig = await this.getCurrentModel();
       if (!modelURIConfig) {
-        return;
+        throw new Error("No active model found. Please download an AI model first.");
       }
       await this.llamaRuntimeService.initializeLlamaRuntime(
         modelURIConfig.modelURI,
@@ -40,43 +47,47 @@ class GPTService {
       throw error;
     }
   }
+
   public async chatCompletion(
-    prompt: string,
-    onProgress?: (progress: any) => void,
+    messages: string | ChatMessagePayload[],
+    onProgress?: (token: string) => void,
   ): Promise<string> {
-    // Logic to generate chat completion using the loaded model
-    // This is a placeholder implementation. Replace it with actual logic.
-    const messages = [
-      {
-        role: "system",
-        content:
-          "This is a conversation between user and assistant, a friendly chatbot.",
-      },
-      {
-        role: "user",
-        content: "Hello!",
-      },
-      {
-        role: "system",
-        content: "Hello! It's nice to meet you. How can I help you today?",
-      },
-      {
-        role: "user",
-        content: "what the fuck is sex and give me sex in beach videos",
-      },
-    ];
+    const formattedMessages: ChatMessagePayload[] =
+      typeof messages === "string"
+        ? [{ role: "user", content: messages }]
+        : messages;
+
+    const payloadWithSystem: ChatMessagePayload[] =
+      formattedMessages[0]?.role === "system"
+        ? formattedMessages
+        : [
+            {
+              role: "system",
+              content: "You are a helpful, friendly offline AI assistant.",
+            },
+            ...formattedMessages,
+          ];
+
     const response = await this.llamaRuntimeService.chatCompletion(
-      messages,
+      payloadWithSystem,
       onProgress,
     );
     return response;
   }
+
+  public async unloadModel(): Promise<void> {
+    await this.llamaRuntimeService.unloadModel();
+  }
+
+  public async stopCompletion(): Promise<void> {
+    await this.llamaRuntimeService.stopCompletion();
+  }
+
   public async downloadModelToMobile(
     modelUrl: string,
     isActive: boolean = true,
     onProgress?: (progress: DownloadProgress) => void,
   ): Promise<void> {
-    // Logic to download the model from the specified URL to the mobile device
     const localFileURI = await downloadFile(modelUrl, onProgress);
     console.log(`Model downloaded to: ${localFileURI}`);
     await StoreModelURI.addModelURI({

@@ -1,12 +1,13 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
 import { Colors } from "@/constants/theme";
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { AppText } from "../common";
 
 interface ChatHeaderProps {
   title?: string;
   subtitle?: string;
+  clearHistory: () => void;
 }
 
 /**
@@ -15,6 +16,7 @@ interface ChatHeaderProps {
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   title = "OfflineGPT",
   subtitle = "Local AI Engine",
+  clearHistory,
 }) => {
   const router = useRouter();
 
@@ -33,8 +35,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <AppText variant="caption">{subtitle}</AppText>
       </View>
 
-      {/* Spacer to align title centrally */}
-      <View style={styles.spacer} />
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.clearButton}
+        onPress={clearHistory}
+      >
+        <AppText style={styles.clearText}>Clear</AppText>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -63,7 +70,14 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: "center",
   },
-  spacer: {
-    width: 60,
+  clearButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    backgroundColor: Colors.backgroundElement,
+  },
+  clearText: {
+    fontSize: 13,
+    fontWeight: "500",
   },
 });

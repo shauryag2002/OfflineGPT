@@ -1,4 +1,6 @@
-import { useRef, useState } from "react";
+import ChatStorageService from "@/services/ChatStorageService";
+import GPTService, { ChatMessagePayload } from "@/services/GPTService";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Platform, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,62 +10,154 @@ import { ChatInputBox } from "./ChatInputBox";
 import { ChatMessage, ChatMessageItem } from "./ChatMessageItem";
 import styles from "./style";
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-    {
-        id: "1",
-        role: "assistant",
-        content: "Hello! I am OfflineGPT running locally on your device. How can I help you today?",
-    },
-];
+const WELCOME_MESSAGE: ChatMessage = {
+    id: "welcome-1",
+    role: "assistant",
+    content: "Hello! I am OfflineGPT running locally on your device. How can I help you today?",
+};
 
 /**
- * ChatScreen component — Modular UI for the simple chat page.
- * Displays the ChatHeader, a scrollable list of message bubbles, and ChatInputBox footer.
+ * ChatScreen component — Connected with GPTService and ChatStorageService.
+ * Handles persistent chat history, local LLM token streaming, and model lifecycle.
  */
 const ChatScreen = () => {
     const [inputText, setInputText] = useState("");
-    const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+    const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [modelLoaded, setModelLoaded] = useState(false);
     const flatListRef = useRef<FlatList>(null);
 
-    const handleSend = () => {
-        if (!inputText.trim() || isGenerating) return;
+    const gptService = GPTService.getInstance();
+    const storageService = ChatStorageService.getInstance();
 
-        const userMessage: ChatMessage = {
-            id: Date.now().toString(),
-            role: "user",
-            content: inputText.trim(),
+    // 1. Load chat history and initialize LLM runtime on mount
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadData = async () => {
+            // Load saved messages
+            const savedMessages = await storageService.getChatMessages();
+            if (isMounted && savedMessages.length > 0) {
+                setMessages(savedMessages);
+            }
+
+            // Initialize local Llama runtime
+            try {
+                await gptService.initializeLlamaRuntime();
+                if (isMounted) setModelLoaded(true);
+            } catch (error) {
+                console.log("Model initialization notice:", error);
+            }
         };
 
-        // Add user message to conversation
-        setMessages((prev) => [...prev, userMessage]);
-        setInputText("");
+        loadData();
 
-        // Simulate / placeholder for offline AI response generation (token-by-token integration)
+        // Cleanup: stop any ongoing generation when screen unmounts
+        return () => {
+            isMounted = false;
+            gptService.stopCompletion().catch(() => { });
+        };
+    }, []);
+
+    // 2. Handle sending user message & streaming LLM completion
+    const handleSend = async () => {
+        const trimmedInput = inputText.trim();
+        if (!trimmedInput || isGenerating) return;
+
+        const userMsg: ChatMessage = {
+            id: Date.now().toString(),
+            role: "user",
+            content: trimmedInput,
+        };
+
+        // Add user message to state & save to AsyncStorage
+        const updatedMessages = [...messages, userMsg];
+        setMessages(updatedMessages);
+        setInputText("");
+        await storageService.saveChatMessages(updatedMessages);
+
+        // Prepare placeholder assistant message for token-by-token streaming
+        const assistantMsgId = (Date.now() + 1).toString();
+        const assistantPlaceholder: ChatMessage = {
+            id: assistantMsgId,
+            role: "assistant",
+            content: "",
+        };
+
+        const messagesWithPlaceholder = [...updatedMessages, assistantPlaceholder];
+        setMessages(messagesWithPlaceholder);
         setIsGenerating(true);
-        setTimeout(() => {
-            const botResponse: ChatMessage = {
-                id: (Date.now() + 1).toString(),
+
+        try {
+            // Build payload for GPTService
+            const payload: ChatMessagePayload[] = updatedMessages.map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+            }));
+
+            let accumulatedContent = "";
+
+            // Stream tokens real-time from llama.rn engine
+            const fullResponse = await gptService.chatCompletion(
+                payload,
+                (token: string) => {
+                    accumulatedContent += token;
+                    setMessages((prevMessages) =>
+                        prevMessages.map((msg) =>
+                            msg.id === assistantMsgId
+                                ? { ...msg, content: accumulatedContent }
+                                : msg,
+                        ),
+                    );
+                },
+            );
+
+            // Finalize completed message and save to storage
+            const finalAssistantMsg: ChatMessage = {
+                id: assistantMsgId,
                 role: "assistant",
-                content: "This is a local response demonstration. Real token streaming will connect here via GPTService!",
+                content: fullResponse || accumulatedContent || "No response received.",
             };
-            setMessages((prev) => [...prev, botResponse]);
+
+            const finalMessagesList = [...updatedMessages, finalAssistantMsg];
+            setMessages(finalMessagesList);
+            await storageService.saveChatMessages(finalMessagesList);
+        } catch (error) {
+            console.error("Chat completion error:", error);
+            const errorMsg: ChatMessage = {
+                id: assistantMsgId,
+                role: "assistant",
+                content: "Sorry, an error occurred while processing offline. Please check if model is loaded.",
+            };
+            const finalMessagesList = [...updatedMessages, errorMsg];
+            setMessages(finalMessagesList);
+            await storageService.saveChatMessages(finalMessagesList);
+        } finally {
             setIsGenerating(false);
-        }, 1000);
+        }
+    };
+
+    const clearHistory = async () => {
+        setMessages([WELCOME_MESSAGE]);
+        await storageService.clearChatMessages();
     };
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
-            {/* 1. Header */}
-            <ChatHeader title="OfflineGPT" subtitle="Local AI Assistant" />
+            {/* Header */}
+            <ChatHeader
+                title="OfflineGPT"
+                subtitle={modelLoaded ? "Model Ready (Offline)" : "Initializing Model..."}
+                clearHistory={clearHistory}
+            />
 
-            {/* 2. Keyboard-aware layout container */}
+            {/* Keyboard-aware Container */}
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={0}
             >
-                {/* Conversation Message List */}
+                {/* Message List */}
                 <FlatList
                     ref={flatListRef}
                     data={messages}
