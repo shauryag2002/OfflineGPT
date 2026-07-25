@@ -1,10 +1,34 @@
 import { Colors } from "@/constants/theme";
 import { StyleSheet } from "react-native";
+
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.background },
-    chatContainer: { flex: 1, padding: 16, justifyContent: "center", alignItems: "center" },
-    chatTitle: { color: Colors.text, fontSize: 20, fontWeight: "600" },
-    chatDescription: { color: Colors.textSecondary, marginTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+    marginTop: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+  },
 });
 
 export default styles;
