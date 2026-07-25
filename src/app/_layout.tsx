@@ -1,8 +1,17 @@
+import { Stack } from "expo-router";
 
-import AppTabs from '@/components/app-tabs';
-
-export default function TabLayout() {
+export default function RootLayout() {
   return (
-      <AppTabs />
+    <Stack screenOptions={{ headerShown: false }} initialRouteName="chat">
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen
+        name="chat"
+        options={{
+          headerShown: false,
+          headerTitle: "Chat",
+          presentation: "card",
+        }}
+      />
+    </Stack>
   );
 }

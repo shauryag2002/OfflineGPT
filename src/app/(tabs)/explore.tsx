@@ -1,5 +1,4 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { Host, Text } from '@expo/ui';
 
 export default function TabTwoScreen() {
@@ -7,8 +6,9 @@ export default function TabTwoScreen() {
 
   return (
     <Host>
-
-<Text textStyle={{color:"blue"}} style={{backgroundColor:"blue"}} >Welcome to OfflineGPT</Text>
+      <Text textStyle={{ color: "blue" }} style={{ backgroundColor: "blue" }}>
+        Welcome to OfflineGPT
+      </Text>
     </Host>
   );
 }

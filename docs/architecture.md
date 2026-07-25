@@ -56,10 +56,17 @@ OfflineGPT is designed around a decoupled, service-oriented architecture using s
 
 ```
 src/
-├── app/                  # Expo Router file-based screens (_layout.tsx, index.tsx, explore.tsx)
+├── app/                  # Expo Router file-based screens
+│   ├── _layout.tsx       # Root Stack layout (manages (tabs) and standalone chat screen)
+│   ├── chat.tsx          # Standalone Chat screen (no bottom tab bar)
+│   └── (tabs)/           # Tab navigation group (with bottom tab bar)
+│       ├── _layout.tsx   # Tab bar layout
+│       ├── index.tsx     # Home screen
+│       └── explore.tsx   # Explore screen
 ├── components/           # UI components (app-tabs.tsx, popup/DownloadModelPopup.tsx)
 ├── constants/            # Global configs and theme palette (global.tsx, theme.ts)
 ├── helpers/              # File system helpers (downloadFile.ts using expo-file-system)
 ├── services/             # Core Singleton Services (GPTService, LlamaRuntimeService, StoreModelURI)
 └── types/                # TypeScript interfaces and type definitions
 ```
+
