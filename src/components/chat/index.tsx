@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { FlatList, View } from "react-native";
+import { FlatList, Platform, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "../common";
 import { ChatHeader } from "./ChatHeader";
@@ -52,35 +53,43 @@ const ChatScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
             {/* 1. Header */}
             <ChatHeader title="OfflineGPT" subtitle="Local AI Assistant" />
 
-            {/* 2. Conversation Message List */}
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <ChatMessageItem message={item} />}
-                contentContainerStyle={styles.listContent}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <AppText style={styles.emptyTitle}>No messages yet</AppText>
-                        <AppText style={styles.emptyText}>
-                            Start a conversation with your offline AI assistant.
-                        </AppText>
-                    </View>
-                }
-            />
+            {/* 2. Keyboard-aware layout container */}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={0}
+            >
+                {/* Conversation Message List */}
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    style={{ flex: 1 }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => <ChatMessageItem message={item} />}
+                    contentContainerStyle={styles.listContent}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <AppText style={styles.emptyTitle}>No messages yet</AppText>
+                            <AppText style={styles.emptyText}>
+                                Start a conversation with your offline AI assistant.
+                            </AppText>
+                        </View>
+                    }
+                />
 
-            {/* 3. Footer Input Box */}
-            <ChatInputBox
-                value={inputText}
-                onChangeText={setInputText}
-                onSend={handleSend}
-                isGenerating={isGenerating}
-            />
+                {/* Footer Input Box */}
+                <ChatInputBox
+                    value={inputText}
+                    onChangeText={setInputText}
+                    onSend={handleSend}
+                    isGenerating={isGenerating}
+                />
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };

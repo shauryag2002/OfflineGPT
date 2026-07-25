@@ -1,7 +1,7 @@
-import React from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Colors } from "@/constants/theme";
-import { AppTextInput, AppButton } from "../common";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { AppButton, AppTextInput } from "../common";
 
 interface ChatInputBoxProps {
   value: string;
@@ -23,28 +23,23 @@ export const ChatInputBox: React.FC<ChatInputBoxProps> = ({
   const canSend = value.trim().length > 0 && !isGenerating;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      <View style={styles.footerContainer}>
-        <AppTextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder="Ask OfflineGPT something..."
-          style={styles.textInput}
-          multiline
-          maxLength={1000}
-        />
-        <AppButton
-          title="Send"
-          onPress={onSend}
-          disabled={!canSend}
-          loading={isGenerating}
-          style={styles.sendButton}
-        />
-      </View>
-    </KeyboardAvoidingView>
+    <View style={styles.footerContainer}>
+      <AppTextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder="Ask OfflineGPT something..."
+        style={styles.textInput}
+        multiline
+        maxLength={1000}
+      />
+      <AppButton
+        title="Send"
+        onPress={onSend}
+        disabled={!canSend}
+        loading={isGenerating}
+        style={styles.sendButton}
+      />
+    </View>
   );
 };
 
