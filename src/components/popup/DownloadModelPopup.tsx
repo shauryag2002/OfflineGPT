@@ -17,13 +17,17 @@ import {
 } from "@expo/ui/jetpack-compose/modifiers";
 import React, { useState } from "react";
 
+const DEFAULT_MODEL_URL =
+  process.env.EXPO_PUBLIC_MODEL_URL ||
+  "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf";
+
 const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
   visible,
   modelUrl,
   onDownloaded,
-  onDismiss,
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("Downloading AI Model...");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,19 +36,28 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
   }
 
   const handleDownload = async () => {
+    const targetUrl = modelUrl || DEFAULT_MODEL_URL;
     setError(null);
     setIsDownloading(true);
+    setProgress(0);
+    setStatusMessage("Downloading model file...");
+
     try {
       const gptService = GPTService.getInstance();
-      await gptService.downloadModelToMobile(modelUrl, true, (data) => {
+      await gptService.downloadModelToMobile(targetUrl, true, (data) => {
         if (data.totalBytes > 0) {
           setProgress(data.bytesWritten / data.totalBytes);
         }
       });
-      onDownloaded();
+
+      setStatusMessage("Initializing AI engine...");
+      setProgress(1);
+
+      // Wait for parent component to complete LLM initialization before closing modal
+      await onDownloaded();
     } catch (err) {
-      console.error("Error downloading model:", err);
-      setError("Failed to download the model. Please try again.");
+      console.error("Error downloading or initializing model:", err);
+      setError("Failed to download or initialize the model. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -53,10 +66,9 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
   return (
     <Host matchContents>
       <BasicAlertDialog
-        onDismissRequest={onDismiss}
         properties={{
-          dismissOnBackPress: !isDownloading,
-          dismissOnClickOutside: !isDownloading,
+          dismissOnBackPress: false,
+          dismissOnClickOutside: false,
         }}
       >
         <Surface
@@ -72,8 +84,8 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
             </Text>
 
             <Text>
-              This model will be downloaded and stored on your device so it
-              can run fully offline.
+              An offline GGUF model is required to run OfflineGPT locally.
+              Click Download to store and initialize it on your device.
             </Text>
 
             {isDownloading && (
@@ -82,14 +94,14 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
                   progress={progress}
                   modifiers={[width(280)]}
                 />
-                <Text>{Math.round(progress * 100)}%</Text>
+                <Text>{statusMessage} ({Math.round(progress * 100)}%)</Text>
               </Column>
             )}
 
             {error && <Text color="red">{error}</Text>}
 
             <Button onClick={handleDownload} enabled={!isDownloading}>
-              <Text>{isDownloading ? "Downloading..." : "Download"}</Text>
+              <Text>{isDownloading ? "Processing..." : "Download Model"}</Text>
             </Button>
           </Column>
         </Surface>

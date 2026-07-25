@@ -1,3 +1,4 @@
+import DownloadModelPopup from "@/components/popup/DownloadModelPopup";
 import ChatStorageService from "@/services/ChatStorageService";
 import GPTService, { ChatMessagePayload } from "@/services/GPTService";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +11,8 @@ import { ChatInputBox } from "./ChatInputBox";
 import { ChatMessage, ChatMessageItem } from "./ChatMessageItem";
 import styles from "./style";
 
+const MODEL_URL = process.env.EXPO_PUBLIC_MODEL_URL || "";
+
 const WELCOME_MESSAGE: ChatMessage = {
     id: "welcome-1",
     role: "assistant",
@@ -18,17 +21,31 @@ const WELCOME_MESSAGE: ChatMessage = {
 
 /**
  * ChatScreen component — Connected with GPTService and ChatStorageService.
- * Handles persistent chat history, local LLM token streaming, and model lifecycle.
+ * Handles persistent chat history, local LLM token streaming, download popup, and model lifecycle.
  */
 const ChatScreen = () => {
     const [inputText, setInputText] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [modelLoaded, setModelLoaded] = useState(false);
+    const [isDownloadPopupVisible, setDownloadPopupVisible] = useState(false);
     const flatListRef = useRef<FlatList>(null);
 
     const gptService = GPTService.getInstance();
     const storageService = ChatStorageService.getInstance();
+
+    const initModelRuntime = async () => {
+        try {
+            await gptService.initializeLlamaRuntime();
+            setModelLoaded(true);
+            setDownloadPopupVisible(false);
+        } catch (error) {
+            console.log("No active model found or runtime error:", error);
+            setModelLoaded(false);
+            setDownloadPopupVisible(true);
+            throw error;
+        }
+    };
 
     // 1. Load chat history and initialize LLM runtime on mount
     useEffect(() => {
@@ -43,10 +60,9 @@ const ChatScreen = () => {
 
             // Initialize local Llama runtime
             try {
-                await gptService.initializeLlamaRuntime();
-                if (isMounted) setModelLoaded(true);
-            } catch (error) {
-                console.log("Model initialization notice:", error);
+                await initModelRuntime();
+            } catch {
+                // Handled inside initModelRuntime
             }
         };
 
@@ -62,7 +78,7 @@ const ChatScreen = () => {
     // 2. Handle sending user message & streaming LLM completion
     const handleSend = async () => {
         const trimmedInput = inputText.trim();
-        if (!trimmedInput || isGenerating) return;
+        if (!trimmedInput || isGenerating || !modelLoaded) return;
 
         const userMsg: ChatMessage = {
             id: Date.now().toString(),
@@ -127,7 +143,7 @@ const ChatScreen = () => {
             const errorMsg: ChatMessage = {
                 id: assistantMsgId,
                 role: "assistant",
-                content: "Sorry, an error occurred while processing offline. Please check if model is loaded.",
+                content: "Sorry, an error occurred while processing offline. Please check if model is downloaded.",
             };
             const finalMessagesList = [...updatedMessages, errorMsg];
             setMessages(finalMessagesList);
@@ -144,10 +160,11 @@ const ChatScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
-            {/* Header */}
+            {/* Header (Back button hidden by default) */}
             <ChatHeader
                 title="OfflineGPT"
                 subtitle={modelLoaded ? "Model Ready (Offline)" : "Initializing Model..."}
+                showBackButton={false}
                 clearHistory={clearHistory}
             />
 
@@ -182,8 +199,19 @@ const ChatScreen = () => {
                     onChangeText={setInputText}
                     onSend={handleSend}
                     isGenerating={isGenerating}
+                    isModelLoaded={modelLoaded}
                 />
             </KeyboardAvoidingView>
+
+            {/* Download AI Model Popup */}
+            <DownloadModelPopup
+                visible={isDownloadPopupVisible}
+                modelUrl={MODEL_URL}
+                onDownloaded={async () => {
+                    await initModelRuntime();
+                    setDownloadPopupVisible(false);
+                }}
+            />
         </SafeAreaView>
     );
 };

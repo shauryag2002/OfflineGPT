@@ -1,9 +1,9 @@
 import { MODEL_URI_LIST } from "@/constants/global";
 import { ModelURIConfig } from "@/types/StoreModelURI-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// this singeleton service will handle all the logic related to storing and retrieving model URIs in the app. This service will use AsyncStorage to store the model URIs in the app.
+
+// This singleton service handles storing and retrieving model URIs using AsyncStorage.
 class StoreModelURI {
-  // Implementation for storing and retrieving model URIs
   private static instance: StoreModelURI;
   private currentModel: ModelURIConfig | null = null;
 
@@ -32,11 +32,27 @@ class StoreModelURI {
       let uriList: ModelURIConfig[] = existingURIs
         ? JSON.parse(existingURIs)
         : [];
-      if (
-        !uriList.some((uriConfig) => uriConfig.modelURI === config.modelURI)
-      ) {
+
+      // If new config is active, mark all existing models as inactive
+      if (config.active) {
+        uriList = uriList.map((item) => ({ ...item, active: false }));
+      }
+
+      const existingIndex = uriList.findIndex(
+        (item) => item.modelURI === config.modelURI,
+      );
+
+      if (existingIndex >= 0) {
+        uriList[existingIndex] = config;
+      } else {
         uriList.push(config);
-        await AsyncStorage.setItem(MODEL_URI_LIST, JSON.stringify(uriList));
+      }
+
+      await AsyncStorage.setItem(MODEL_URI_LIST, JSON.stringify(uriList));
+
+      // Update cached instance model if active
+      if (config.active) {
+        StoreModelURI.getInstance().currentModel = config;
       }
     } catch (error) {
       console.error("Error storing model URI:", error);
@@ -53,28 +69,33 @@ class StoreModelURI {
         (uriConfig) => uriConfig.modelURI !== config.modelURI,
       );
       await AsyncStorage.setItem(MODEL_URI_LIST, JSON.stringify(uriList));
+
+      if (StoreModelURI.getInstance().currentModel?.modelURI === config.modelURI) {
+        StoreModelURI.getInstance().currentModel = null;
+      }
     } catch (error) {
       console.error("Error removing model URI:", error);
     }
   }
+
   public static async clearAllModelURIs(): Promise<void> {
     try {
       await AsyncStorage.removeItem(MODEL_URI_LIST);
+      StoreModelURI.getInstance().currentModel = null;
     } catch (error) {
       console.error("Error clearing model URIs:", error);
     }
   }
+
   public async getCurrentModel(): Promise<ModelURIConfig | null> {
-    if (!this.currentModel) {
-      const storedModels = await StoreModelURI.getStoredModelURIs();
-      if (storedModels.length > 0) {
-        StoreModelURI.instance.currentModel =
-          storedModels.filter((model) => model.active)[0] || null;
-        return this.currentModel;
-      }
-      return null;
+    const storedModels = await StoreModelURI.getStoredModelURIs();
+    if (storedModels.length > 0) {
+      const activeModel = storedModels.find((model) => model.active) || storedModels[0];
+      this.currentModel = activeModel;
+      return activeModel;
     }
-    return this.currentModel;
+    this.currentModel = null;
+    return null;
   }
 }
 

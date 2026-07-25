@@ -8,6 +8,7 @@ interface ChatInputBoxProps {
   onChangeText: (text: string) => void;
   onSend: () => void;
   isGenerating?: boolean;
+  isModelLoaded?: boolean;
 }
 
 /**
@@ -19,15 +20,21 @@ export const ChatInputBox: React.FC<ChatInputBoxProps> = ({
   onChangeText,
   onSend,
   isGenerating = false,
+  isModelLoaded = true,
 }) => {
-  const canSend = value.trim().length > 0 && !isGenerating;
+  const canSend = value.trim().length > 0 && !isGenerating && isModelLoaded;
 
   return (
     <View style={styles.footerContainer}>
       <AppTextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder="Ask OfflineGPT something..."
+        placeholder={
+          isModelLoaded
+            ? "Ask OfflineGPT something..."
+            : "Model loading... please wait"
+        }
+        editable={isModelLoaded && !isGenerating}
         style={styles.textInput}
         multiline
         maxLength={1000}

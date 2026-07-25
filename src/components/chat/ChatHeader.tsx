@@ -7,6 +7,7 @@ import { AppText } from "../common";
 interface ChatHeaderProps {
   title?: string;
   subtitle?: string;
+  showBackButton?: boolean;
   clearHistory: () => void;
 }
 
@@ -16,19 +17,24 @@ interface ChatHeaderProps {
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   title = "OfflineGPT",
   subtitle = "Local AI Engine",
+  showBackButton = false,
   clearHistory,
 }) => {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
-        <AppText style={styles.backText}>← Back</AppText>
-      </TouchableOpacity>
+      {showBackButton ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <AppText style={styles.backText}>← Back</AppText>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.placeholder} />
+      )}
 
       <View style={styles.titleContainer}>
         <AppText variant="subtitle">{title}</AppText>
@@ -66,6 +72,9 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 13,
     fontWeight: "500",
+  },
+  placeholder: {
+    width: 50,
   },
   titleContainer: {
     alignItems: "center",

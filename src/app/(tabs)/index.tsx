@@ -69,7 +69,6 @@ export default function HomeScreen() {
           setDownloadPopupVisible(false);
           initModel();
         }}
-        onDismiss={() => setDownloadPopupVisible(false)}
       />
     </SafeAreaView >
   );
