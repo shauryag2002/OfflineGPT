@@ -39,7 +39,16 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    initModel();
+    let isMounted = true;
+    const runInit = async () => {
+      if (isMounted) {
+        await initModel();
+      }
+    };
+    runInit();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

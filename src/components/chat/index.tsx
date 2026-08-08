@@ -78,7 +78,9 @@ const ChatScreen = () => {
     // 2. Handle sending user message & streaming LLM completion
     const handleSend = async () => {
         const trimmedInput = inputText.trim();
-        if (!trimmedInput || isGenerating || !modelLoaded) return;
+        if (!trimmedInput || isGenerating || !modelLoaded) {
+            return;
+        }
 
         const userMsg: ChatMessage = {
             id: Date.now().toString(),
