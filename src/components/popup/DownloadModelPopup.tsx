@@ -46,7 +46,11 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
       const gptService = GPTService.getInstance();
       await gptService.downloadModelToMobile(targetUrl, true, (data) => {
         if (data.totalBytes > 0) {
-          setProgress(data.bytesWritten / data.totalBytes);
+          const calculatedProgress = data.bytesWritten / data.totalBytes;
+          setProgress(calculatedProgress);
+          setStatusMessage(
+            calculatedProgress > 0 ? "Downloading AI model..." : "Resuming download...",
+          );
         }
       });
 
@@ -57,7 +61,9 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
       await onDownloaded();
     } catch (err) {
       console.error("Error downloading or initializing model:", err);
-      setError("Failed to download or initialize the model. Please try again.");
+      setError(
+        "Download paused or interrupted. Click Resume Download to continue.",
+      );
     } finally {
       setIsDownloading(false);
     }
@@ -88,7 +94,7 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
               Click Download to store and initialize it on your device.
             </Text>
 
-            {isDownloading && (
+            {(isDownloading || progress > 0) && (
               <Column verticalArrangement={{ spacedBy: 4 }}>
                 <LinearProgressIndicator
                   progress={progress}
@@ -101,7 +107,13 @@ const DownloadModelPopup: React.FC<DownloadModelPopupProps> = ({
             {error && <Text color="red">{error}</Text>}
 
             <Button onClick={handleDownload} enabled={!isDownloading}>
-              <Text>{isDownloading ? "Processing..." : "Download Model"}</Text>
+              <Text>
+                {isDownloading
+                  ? "Processing..."
+                  : progress > 0
+                    ? "Resume Download"
+                    : "Download Model"}
+              </Text>
             </Button>
           </Column>
         </Surface>

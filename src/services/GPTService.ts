@@ -1,7 +1,7 @@
 import { downloadFile } from "@/helpers/downloadFile";
 import LlamaRuntimeService from "@/services/LlamaRuntimeService";
 import { ModelURIConfig } from "@/types/StoreModelURI-types";
-import { DownloadProgress } from "expo-file-system";
+import { Directory, DownloadProgress, File, Paths } from "expo-file-system";
 import StoreModelURI from "./StoreModelURI";
 
 export interface ChatMessagePayload {
@@ -35,13 +35,34 @@ class GPTService {
 
   public async initializeLlamaRuntime(): Promise<void> {
     try {
-      const modelURIConfig = await this.getCurrentModel();
+      let modelURIConfig = await this.getCurrentModel();
       if (!modelURIConfig) {
         throw new Error("No active model found. Please download an AI model first.");
       }
-      await this.llamaRuntimeService.initializeLlamaRuntime(
-        modelURIConfig.modelURI,
-      );
+
+      let activeURI = modelURIConfig.modelURI;
+      let modelFile = new File(activeURI);
+
+      // Handle iOS/Expo app container UUID changes across updates
+      if (!modelFile.exists || !modelFile.size || modelFile.size === 0) {
+        const fileName = activeURI.split("/").pop() || "model.bin";
+        const currentModelsDir = new Directory(Paths.document, "models");
+        const fallbackFile = new File(currentModelsDir, fileName);
+
+        if (fallbackFile.exists && fallbackFile.size && fallbackFile.size > 0) {
+          activeURI = fallbackFile.uri;
+          modelURIConfig = { ...modelURIConfig, modelURI: activeURI };
+          await StoreModelURI.addModelURI(modelURIConfig);
+          modelFile = fallbackFile;
+        }
+      }
+
+      if (!modelFile.exists || !modelFile.size || modelFile.size === 0) {
+        await StoreModelURI.removeModelURI(modelURIConfig);
+        throw new Error("Model file missing or corrupted. Please redownload.");
+      }
+
+      await this.llamaRuntimeService.initializeLlamaRuntime(activeURI);
     } catch (error) {
       console.error("Error initializing Llama runtime:", error);
       throw error;
